@@ -1,0 +1,35 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 每天凌晨2点 UTC 自动执行
+  workflow_dispatch:        # 也支持手动触发（点一下按钮就同步）
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/openJiuwen-ai/jiuwenswarm.git
+          git fetch upstream
+
+      - name: Merge upstream/main into origin/main
+        run: |
+          git checkout main
+          git merge upstream/main --no-edit || true
+
+      - name: Push to fork
+        run: |
+          git push origin main
